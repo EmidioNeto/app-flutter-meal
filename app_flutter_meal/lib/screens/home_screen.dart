@@ -1,32 +1,75 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class HomeScreen extends StatelessWidget {
+  final String apiUrl =
+      "https://www.themealdb.com/api/json/v1/1/list.php?c=list/";
+
+  Future<List<dynamic>> fetchCategories() async {
+    var result = await http.get(Uri.parse(apiUrl));
+    return json.decode(result.body)['meals'];
+  }
+
+  String _name(dynamic category) {
+    return category['strCategory'];
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: buildAppBar(),
-      body: Column(
-        children: <Widget>[
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Text("Categories"),
+        appBar: buildAppBar(),
+        body: Container(
+          child: FutureBuilder<List<dynamic>>(
+            future: fetchCategories(),
+            builder: (BuildContext context, AsyncSnapshot snapshot) {
+              print(snapshot.hasError);
+              if (snapshot.hasData) {
+                return ListView.builder(
+                    padding: EdgeInsets.all(8),
+                    itemCount: snapshot.data.length,
+                    itemBuilder: (BuildContext context, int index) {
+                      return Card(
+                        child: Column(
+                          children: <Widget>[
+                            ListTile(
+                              leading: CircleAvatar(
+                                radius: 30,
+                                /*backgroundImage: NetworkImage(snapshot
+                                      .data[index]['picture']['large'])*/
+                              ),
+                              title: Text(_name(snapshot.data[index])),
+                              subtitle: Text(""),
+                              //trailing: Text(_name(snapshot.data[index])),
+                            )
+                          ],
+                        ),
+                      );
+                    });
+                ;
+              } else {
+                return Center(child: CircularProgressIndicator());
+              }
+            },
           ),
+        ));
+  }
+
+/*
+Column(
+        children: <Widget>[
+          titleSection("Categories"),
           Expanded(
             child: listFilter(),
           ),
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Text("Area"),
-          ),
+          titleSection("Area"),
           Expanded(
             child: listFilter(),
           ),
         ],
       ),
-    );
-  }
-
+*/
   ListView listFilter() {
     return ListView(
       scrollDirection: Axis.horizontal,
@@ -98,9 +141,35 @@ class HomeScreen extends StatelessWidget {
   AppBar buildAppBar() {
     return AppBar(
       elevation: 0,
+      title: Text("Best Recipes"),
       leading: IconButton(
         onPressed: () {},
         icon: SvgPicture.asset("assets/icons/menu.svg"),
+      ),
+    );
+  }
+
+  Widget titleSection(title) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  child: Text(
+                    title,
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
