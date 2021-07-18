@@ -1,175 +1,105 @@
+import 'package:app_flutter_meal/models/category_filter.dart';
+import 'package:app_flutter_meal/screens/category_screen.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/svg.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
 
-class HomeScreen extends StatelessWidget {
-  final String apiUrl =
-      "https://www.themealdb.com/api/json/v1/1/list.php?c=list/";
+class HomeScreen extends StatefulWidget {
+  HomeScreen({Key? key, required this.title}) : super(key: key);
 
-  Future<List<dynamic>> fetchCategories() async {
-    var result = await http.get(Uri.parse(apiUrl));
-    return json.decode(result.body)['meals'];
-  }
-
-  String _name(dynamic category) {
-    return category['strCategory'];
-  }
+  final String title;
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-        appBar: buildAppBar(),
-        body: Container(
-          child: FutureBuilder<List<dynamic>>(
-            future: fetchCategories(),
-            builder: (BuildContext context, AsyncSnapshot snapshot) {
-              print(snapshot.hasError);
-              if (snapshot.hasData) {
-                return ListView.builder(
-                    padding: EdgeInsets.all(8),
-                    itemCount: snapshot.data.length,
-                    itemBuilder: (BuildContext context, int index) {
-                      return Card(
-                        child: Column(
-                          children: <Widget>[
-                            ListTile(
-                              leading: CircleAvatar(
-                                radius: 30,
-                                /*backgroundImage: NetworkImage(snapshot
-                                      .data[index]['picture']['large'])*/
-                              ),
-                              title: Text(_name(snapshot.data[index])),
-                              subtitle: Text(""),
-                              //trailing: Text(_name(snapshot.data[index])),
-                            )
-                          ],
-                        ),
-                      );
-                    });
-                ;
-              } else {
-                return Center(child: CircularProgressIndicator());
-              }
-            },
+  _HomeScreenState createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  AppBar buildAppBar(BuildContext context) {
+    return AppBar(
+      elevation: 0,
+      title: Text("World's Best Recipes"),
+    );
+  }
+
+  Widget categoryFilterCard(CategoryFilter filter) {
+    return Padding(
+        padding: const EdgeInsets.all(10.0),
+        child: GestureDetector(
+          onTap: () {
+            print("navigating to RecipesScreen with param:" + filter.name);
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                  builder: (context) => CategoryScreen(
+                      key: null,
+                      title: filter.title,
+                      filter: filter.externalName)),
+            );
+          },
+          child: Card(
+            child: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Row(
+                children: <Widget>[
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Container(
+                      width: 50.0,
+                      height: 50.0,
+                      decoration: new BoxDecoration(
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        filter.icon,
+                        color: Colors.black,
+                        size: 24.0,
+                        semanticLabel: 'Filter ' + filter.name,
+                      ),
+                    ),
+                  ),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      Text(
+                        filter.name,
+                      ),
+                      Text(
+                        filter.description,
+                      )
+                    ],
+                  )
+                ],
+              ),
+            ),
           ),
         ));
   }
 
-/*
-Column(
-        children: <Widget>[
-          titleSection("Categories"),
-          Expanded(
-            child: listFilter(),
-          ),
-          titleSection("Area"),
-          Expanded(
-            child: listFilter(),
-          ),
-        ],
-      ),
-*/
-  ListView listFilter() {
-    return ListView(
-      scrollDirection: Axis.horizontal,
-      children: <Widget>[
-        GestureDetector(
-            onTap: () {
-              print("Container clicked cyan");
-            },
-            child: new Container(
-              width: 500.0,
-              padding: new EdgeInsets.fromLTRB(20.0, 40.0, 20.0, 40.0),
-              color: Colors.cyan,
-              child: new Column(children: [
-                new Text("Ableitungen cyan"),
-              ]),
-            )),
-        GestureDetector(
-            onTap: () {
-              print("Container clicked red");
-            },
-            child: new Container(
-              width: 500.0,
-              padding: new EdgeInsets.fromLTRB(20.0, 40.0, 20.0, 40.0),
-              color: Colors.red,
-              child: new Column(children: [
-                new Text("Ableitungen red"),
-              ]),
-            )),
-        GestureDetector(
-            onTap: () {
-              print("Container clicked black");
-            },
-            child: new Container(
-              width: 500.0,
-              padding: new EdgeInsets.fromLTRB(20.0, 40.0, 20.0, 40.0),
-              color: Colors.black,
-              child: new Column(children: [
-                new Text("Ableitungen black"),
-              ]),
-            )),
-        GestureDetector(
-            onTap: () {
-              print("Container clicked green");
-            },
-            child: new Container(
-              width: 500.0,
-              padding: new EdgeInsets.fromLTRB(20.0, 40.0, 20.0, 40.0),
-              color: Colors.green,
-              child: new Column(children: [
-                new Text("Ableitungen green"),
-              ]),
-            )),
-        GestureDetector(
-            onTap: () {
-              print("Container clicked yellow");
-            },
-            child: new Container(
-              width: 500.0,
-              padding: new EdgeInsets.fromLTRB(20.0, 40.0, 20.0, 40.0),
-              color: Colors.yellow,
-              child: new Column(children: [
-                new Text("Ableitungen yellow"),
-              ]),
-            )),
-      ],
-    );
-  }
+  @override
+  Widget build(BuildContext context) {
+    List<CategoryFilter> filters = <CategoryFilter>[];
+    filters.add(new CategoryFilter(
+        name: 'Types of meal',
+        title: 'Select your favorite type of meal',
+        externalName: 'c',
+        description: 'Find everyday cooking inspiration',
+        icon: Icons.restaurant));
+    filters.add(new CategoryFilter(
+        name: "World's Recipes",
+        title: "Select your favorite world's cuisine",
+        externalName: 'a',
+        description: "Discover world's cuisine recipes",
+        icon: Icons.public));
 
-  AppBar buildAppBar() {
-    return AppBar(
-      elevation: 0,
-      title: Text("Best Recipes"),
-      leading: IconButton(
-        onPressed: () {},
-        icon: SvgPicture.asset("assets/icons/menu.svg"),
-      ),
-    );
-  }
-
-  Widget titleSection(title) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  child: Text(
-                    title,
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
+    return Scaffold(
+      appBar: buildAppBar(context),
+      body: Container(
+        child: Column(
+          children: <Widget>[
+            Column(
+                children: filters.map((p) {
+              return categoryFilterCard(p);
+            }).toList())
+          ],
+        ),
       ),
     );
   }

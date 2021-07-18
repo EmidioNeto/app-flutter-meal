@@ -1,42 +1,32 @@
-import 'package:app_flutter_meal/models/meal.dart';
-import 'package:app_flutter_meal/screens/recipe_screen.dart';
+import 'package:app_flutter_meal/Models/category.dart';
+import 'package:app_flutter_meal/screens/recipes_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
-class RecipesScreen extends StatefulWidget {
-  RecipesScreen(
-      {Key? key,
-      required this.title,
-      required this.filter,
-      required this.category})
+class CategoryScreen extends StatefulWidget {
+  CategoryScreen({Key? key, required this.title, required this.filter})
       : super(key: key);
 
   final String title;
   final String filter;
-  final String category;
 
   @override
-  _RecipesScreenState createState() =>
-      _RecipesScreenState(this.filter, this.category);
+  _CategoryScreenState createState() => _CategoryScreenState(filter);
 }
 
-class _RecipesScreenState extends State<RecipesScreen> {
+class _CategoryScreenState extends State<CategoryScreen> {
   final String apiUrlTemplate =
-      "https://www.themealdb.com/api/json/v1/1/filter.php?categoryParam=filterParam";
+      "https://www.themealdb.com/api/json/v1/1/list.php?filterParam=list/";
 
   final String filter;
 
-  final String category;
+  late Future<CategorySeries> categorySeries;
 
-  late Future<MealSeries> mealSeries;
+  _CategoryScreenState(this.filter);
 
-  _RecipesScreenState(this.filter, this.category);
-
-  Future<String> _loadRemoteData(String filter, String category) async {
-    String apiUrl = apiUrlTemplate
-        .replaceFirst("filterParam", filter)
-        .replaceFirst("categoryParam", category);
+  Future<String> _loadRemoteData(String filter) async {
+    String apiUrl = apiUrlTemplate.replaceFirst("filterParam", filter);
     final response = await (http.get(Uri.parse(apiUrl)));
     if (response.statusCode == 200) {
       print('response statusCode is 200');
@@ -47,20 +37,20 @@ class _RecipesScreenState extends State<RecipesScreen> {
     }
   }
 
-  Future<MealSeries> fetchMeals() async {
-    String jsonString = await _loadRemoteData(this.filter, this.category);
+  Future<CategorySeries> fetchItems() async {
+    String jsonString = await _loadRemoteData(this.filter);
 
     final jsonResponse = json.decode(jsonString);
 
-    MealSeries mealSeries = new MealSeries.fromJson(jsonResponse);
+    CategorySeries categorySeries = new CategorySeries.fromJson(jsonResponse);
 
-    return mealSeries;
+    return categorySeries;
   }
 
   @override
   void initState() {
     super.initState();
-    mealSeries = fetchMeals();
+    categorySeries = fetchItems();
   }
 
   AppBar buildAppBar(BuildContext context) {
@@ -70,17 +60,20 @@ class _RecipesScreenState extends State<RecipesScreen> {
     );
   }
 
-  Widget mealCard(Meal item) {
+  Widget mealCard(CategoryItem item) {
     return Padding(
         padding: const EdgeInsets.all(10.0),
         child: GestureDetector(
           onTap: () {
-            print("navigating to RecipeScreen with param:" + item.id);
+            print("navigating to RecipesScreen with param:" + item.name);
             Navigator.push(
               context,
               MaterialPageRoute(
-                  builder: (context) => RecipeScreen(
-                      key: null, title: item.name, filter: item.id)),
+                  builder: (context) => RecipesScreen(
+                      key: null,
+                      title: "Here our best " + item.name + " recipes",
+                      filter: item.name,
+                      category: this.filter)),
             );
           },
           child: Card(
@@ -97,7 +90,7 @@ class _RecipesScreenState extends State<RecipesScreen> {
                         shape: BoxShape.circle,
                       ),
                       child: Icon(
-                        Icons.dinner_dining,
+                        Icons.local_dining,
                         color: Colors.black,
                         size: 24.0,
                         semanticLabel: 'Meal ' + item.name,
@@ -125,8 +118,8 @@ class _RecipesScreenState extends State<RecipesScreen> {
       appBar: AppBar(
         title: Text(widget.title),
       ),
-      body: FutureBuilder<MealSeries>(
-          future: mealSeries,
+      body: FutureBuilder<CategorySeries>(
+          future: categorySeries,
           builder: (context, snapshot) {
             if (snapshot.hasData) {
               return ListView.builder(
