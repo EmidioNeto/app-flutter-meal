@@ -1,4 +1,4 @@
-import 'package:app_flutter_meal/Models/category.dart';
+import 'package:app_flutter_meal/models/category.dart';
 import 'package:app_flutter_meal/screens/recipes_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
